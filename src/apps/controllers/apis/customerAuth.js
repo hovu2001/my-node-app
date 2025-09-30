@@ -4,7 +4,7 @@ const { validationResult } = require("express-validator");
 const jwt = require("../../../libs/jwt");
 
 exports.register = async (req, res) => {
-    try {
+  try {
     // validate form
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -60,40 +60,46 @@ exports.register = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-    try {
-        const {email, password}  = req.body;
+  try {
+    const { email, password } = req.body;
 
-        const isEmail =  await CustomerModel.findOne({email});
-        if(!isEmail )
-            return res.status(400).json({
-                status: "error",
-                message: "Invalid email",
-            });
-        //  const isPassword = await bcrypt.compare(password, isEmail.password) ;
-        const isPassword = isEmail.password;
-         if(!isPassword)  
-             return res.status(400).json({
-                status: "error",
-                message: "Invalid password",
-            });
-            if(isEmail && isPassword){
-                const accessToken = await jwt.generateAccessToken(isEmail);
-                const {password, ...others} = isEmail.toObject();
-                return res.status(200).json({
-                    status: "success",
-                    message: "Logged in successfully",
-                    customer: others,
-                    accessToken,
-                })
-            }
-    } catch (error) {
-        return res.status(500).json({
-            status: "error",
-            message: "Internal server error",
-            error: error.message,
-        })
-    }
+    const isEmail = await CustomerModel.findOne({ email });
+   
+     if (!isEmail)
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid email",
+      });
 
+    const isPassword = await bcrypt.compare(password, isEmail.password);
+    if (!isPassword)
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid password",
+      });
+    
+      if(isEmail && isPassword){
+          // Generate Token
+          const accessToken = await jwt.generateAccessToken(isEmail);
+           const {password, ...others} = isEmail.toObject();
+          // Response Token & Customer
+
+          return res.status(200).json({
+            status: "success",
+            message: "Logged in successfully",
+            customer: others,
+            accessToken,
+          })
+      }
+
+      
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "Internal sever error",
+      error: error.message,
+    });
+  }
 };
 exports.logout = async (req, res) => {};
 exports.refreshToken = async (req, res) => {};

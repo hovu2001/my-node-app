@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
-const config = require("config")
- exports.generateAccessToken = async (payload) =>
+const config = require("config");
+exports.generateAccessToken = async (payload) =>
   await jwt.sign(
     {
       id: payload._id,
@@ -9,7 +9,8 @@ const config = require("config")
     config.get("app.jwtAccessKey"),
     { expiresIn: "1d" }
   );
- exports.generateRefreshToken = async (payload) =>
+
+exports.generateRefreshToken = async (payload) =>
   await jwt.sign(
     {
       id: payload._id,
@@ -17,4 +18,4 @@ const config = require("config")
     },
     config.get("app.jwtRefreshKey"),
     { expiresIn: "1d" }
-  );
+  );  
