@@ -6,17 +6,45 @@ const CategoryController = require("../apps/controllers/apis/category");
 const ProductController = require("../apps/controllers/apis/product");
 const CommentController = require("../apps/controllers/apis/comment");
 const CustomerAuthController = require("../apps/controllers/apis/customerAuth");
-
+const OrderController = require("../apps/controllers/apis/order");
 //import middleware
+const {
+  categoryRules,
+  updateCategoryRules,
+  categoryValidator,
+} = require("../apps/middlewares/categoryValidator");
+
 const {
   loginRules,
   loginValidator,
 } = require("../apps/middlewares/authValidator");
 const { registerValidator } = require("../apps/middlewares/customerValidator");
+const {
+  verifyAccessToken,
+  verifyRefreshToken,
+} = require("../apps/middlewares/customerAuth");
+const { verifyCustomer } = require("../apps/middlewares/orderAuth");
+const {
+  createOrderRules,
+  createOrderValidator,
+} = require("../apps/middlewares/orderValidator");
 
 // Categories
 router.get("/categories", CategoryController.findAll);
 router.get("/categories/:id", CategoryController.findOne);
+router.post(
+  "/categories",
+  categoryRules,
+  categoryValidator,
+  CategoryController.create
+);
+router.put(
+  "/categories/:id",
+  updateCategoryRules,
+  categoryValidator,
+  CategoryController.update
+);
+router.delete("/categories/:id", CategoryController.remove);
 
 // Products
 router.get("/products", ProductController.fillAll);
@@ -39,7 +67,27 @@ router.post(
   CustomerAuthController.login
 );
 router.post("/auth/customers/logout", CustomerAuthController.logout);
-router.post("/auth/customers/refresh", CustomerAuthController.refreshToken);
-router.get("/auth/customers/me", CustomerAuthController.getMe);
+router.post(
+  "/auth/customers/refresh",
+  verifyRefreshToken,
+  CustomerAuthController.refreshToken
+);
+router.get(
+  "/auth/customers/me",
+  verifyAccessToken,
+  CustomerAuthController.getMe
+);
+
+//Order APi
+router.post(
+  "/customers/orders",
+  verifyCustomer,
+  createOrderRules,
+  createOrderValidator,
+  OrderController.order
+);
+// router.get("/customers/orders", OrderController.findByCustomerId);
+// router.get("/customers/orders/:id", OrderController.findOne);
+// router.patch("/customers/orders/:id/cancel", OrderController.cancel);
 
 module.exports = router;

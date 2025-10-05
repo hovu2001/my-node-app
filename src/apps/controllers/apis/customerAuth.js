@@ -81,8 +81,15 @@ exports.login = async (req, res) => {
       if(isEmail && isPassword){
           // Generate Token
           const accessToken = await jwt.generateAccessToken(isEmail);
-           const {password, ...others} = isEmail.toObject();
+          const refreshToken = await jwt.generateRefreshToken(isEmail);
+          const {password, ...others} = isEmail.toObject();
           // Response Token & Customer
+          res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "Strict",
+            maxAge: 24 * 60 * 60 * 1000,
+          });
 
           return res.status(200).json({
             status: "success",
@@ -102,5 +109,37 @@ exports.login = async (req, res) => {
   }
 };
 exports.logout = async (req, res) => {};
-exports.refreshToken = async (req, res) => {};
-exports.getMe = async (req, res) => {};
+exports.refreshToken = async (req, res) => {
+  try {
+    const {decoded} = req;
+    const accessToken = await jwt.generateAccessToken(decoded);
+    return res.status(200).json({
+      status: "success",
+      message: "Access token refreshed successfully",
+      accessToken,
+    })
+    
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "Internal sever error",
+      error: error.message,
+    });
+  }
+};
+exports.getMe = async (req, res) => {
+  try {
+    const {customer} = req;
+    res.status(200).json({
+      status: "success",
+      message: "User profile retrieved successfully",
+      data: customer,
+    })
+  } catch (error) {
+     return res.status(500).json({
+      status: "error",
+      message: "Internal sever error",
+      error: error.message,
+    });
+  }
+};
