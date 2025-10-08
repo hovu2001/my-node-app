@@ -5,24 +5,23 @@ exports.order = async (req, res) => {
   try {
     let customerInfo = {};
     if (req.customer) {
-      // Customer
+      // Khách hàng
       customerInfo = {
         customer_id: req.customer._id,
+        fullName: req.customer.fullName,
         email: req.customer.email,
         phone: req.customer.phone,
         address: req.customer.address,
       };
     } else {
-      // Guest
-      const { email, phone, address } = req.body;
-      customerInfo = { email, phone, address };
+      // Khách vãng lai
+      const { fullName, email, phone, address } = req.body;
+      customerInfo = { fullName, email, phone, address };
     }
-
-    // Create order
+    // Tính toán lại giá từ DB
     let totalPrice = 0;
     let orderItems = [];
     const { items } = req.body;
-
     for (let item of items) {
       const product = await ProductModel.findById(item.prd_id);
       if (!product) {
@@ -31,7 +30,6 @@ exports.order = async (req, res) => {
           message: `Product ${item.prd_id} not found`,
         });
       }
-
       const itemPrice = product.price;
       totalPrice += item.qty * itemPrice;
       orderItems.push({
@@ -40,16 +38,15 @@ exports.order = async (req, res) => {
         price: itemPrice,
       });
     }
-
+    // Tạo đơn hàng
     const order = await OrderModel.create({
       ...customerInfo,
       totalPrice,
       items: orderItems,
     });
-
     return res.status(201).json({
       status: "success",
-      message: "Order created successfully",
+      message: "Create order successfully",
       data: order,
     });
   } catch (error) {
@@ -60,3 +57,4 @@ exports.order = async (req, res) => {
     });
   }
 };
+

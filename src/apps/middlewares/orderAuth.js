@@ -7,13 +7,13 @@ exports.verifyCustomer = async (req, res, next) => {
     jwt.verify(token, config.get("app.jwtAccessKey"), async (err, decode)=>{
         if (err){
             req.customer = null;
-            next();
+            return next();
         }
         const customer = await CustomerModel.findById(decode.id).select(
             "-password"
         );
         req.customer = customer || null;
-        next();
+        return next();
     });
 } catch (error) {
     req.customer = null;

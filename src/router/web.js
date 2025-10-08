@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const upload = require("../libs/upload")
 
 //Import Controller
 const CategoryController = require("../apps/controllers/apis/category");
@@ -29,6 +30,9 @@ const {
   createOrderValidator,
 } = require("../apps/middlewares/orderValidator");
 
+
+
+
 // Categories
 router.get("/categories", CategoryController.findAll);
 router.get("/categories/:id", CategoryController.findOne);
@@ -47,14 +51,19 @@ router.put(
 router.delete("/categories/:id", CategoryController.remove);
 
 // Products
-router.get("/products", ProductController.fillAll);
+router.get("/products", ProductController.findAll);
 router.get("/products/:id", ProductController.findOne);
+router.put("/products/:id", ProductController.update);
+router.delete("/products/:id",ProductController.remove);
+router.post("/products", upload.single("image"), ProductController.create);
 
+
+//Comment
 router.get("/products/:id/comments", CommentController.findByProductId);
 router.post("/products/:id/comments", CommentController.create);
 
-//Auth
 
+//Auth
 router.post(
   "/auth/customers/register",
   registerValidator,
