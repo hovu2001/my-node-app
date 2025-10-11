@@ -61,7 +61,8 @@ router.post("/products", upload.single("image"), ProductController.create);
 //Comment
 router.get("/products/:id/comments", CommentController.findByProductId);
 router.post("/products/:id/comments", CommentController.create);
-
+router.put("/comments/:id/approve", CommentController.approve);
+router.delete("/comments/:id",CommentController.remove);
 
 //Auth
 router.post(
