@@ -52,7 +52,7 @@ exports.register = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({
-      status: "error", // Đã sửa chính tả
+      status: "error", 
       message: "Internal server error",
       error: error.message,
     });

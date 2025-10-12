@@ -36,6 +36,11 @@ const {
 } = require("../apps/middlewares/registerUserValidator");
 
 const {
+  loginUserRules,
+  loginUserValidator,
+} = require("../apps/middlewares/authUserValidator");
+
+const {
   createOrderRules,
   createOrderValidator,
 } = require("../apps/middlewares/orderValidator");
@@ -101,7 +106,13 @@ router.post(
   registerUserValidator,
   UserController.register
 );
-router.post("/auth/users/login", UserController.login);
+
+router.post(
+  "/auth/users/login",
+  loginUserRules,
+  loginUserValidator,
+  UserController.login
+);
 router.post("/auth/users/logout", UserController.logout);
 router.post("/auth/users/refresh", UserController.refreshToken);
 router.get("/auth/users/me", UserController.getMe);
