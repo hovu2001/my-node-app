@@ -31,6 +31,11 @@ const {
 const { verifyCustomer } = require("../apps/middlewares/orderAuth");
 
 const {
+  verifyUserAccessToken,
+  verifyUserRefreshToken,
+} = require("../apps/middlewares/userAuth");
+
+const {
   registerUserRules,
   registerUserValidator,
 } = require("../apps/middlewares/registerUserValidator");
@@ -44,6 +49,7 @@ const {
   createOrderRules,
   createOrderValidator,
 } = require("../apps/middlewares/orderValidator");
+
 
 // Categories
 router.get("/categories", CategoryController.findAll);
@@ -114,8 +120,8 @@ router.post(
   UserController.login
 );
 router.post("/auth/users/logout", UserController.logout);
-router.post("/auth/users/refresh", UserController.refreshToken);
-router.get("/auth/users/me", UserController.getMe);
+router.post("/auth/users/refresh",verifyUserRefreshToken, UserController.refreshToken);
+router.get("/auth/users/me",verifyUserAccessToken, UserController.getMe);
 
 //Order API
 router.post(

@@ -41,37 +41,43 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     const isEmail = await UserModel.findOne({ email });
-    if(!isEmail) {
+    if (!isEmail) {
       return res.status(400).json({
         status: "error",
         message: "Invalid email",
       });
     }
 
-    const isPassword = await bcrypt.compare(password, isEmail.password) 
+    const isPassword = await bcrypt.compare(password, isEmail.password);
     // ||  await UserModel.findOne({ password });
-    
-    if(!isPassword) {
+
+    if (!isPassword) {
       return res.status(400).json({
         status: "error",
         message: "Invalid password",
       });
     }
-    
-    if(isEmail && isPassword){
+
+    if (isEmail && isPassword) {
       // Generate Token
       const accessToken = await jwt.generateAccessToken(isEmail);
-      const {password, ...user} = isEmail.toObject();
+      const refreshToken = await jwt.generateRefreshToken(isEmail);
+      const { password, ...user } = isEmail.toObject();
       // Response API
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "strict",
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+
       return res.status(200).json({
         status: "success",
         message: "Login successfully",
         user: user,
-        accessToken
+        accessToken,
       });
-        
     }
-
   } catch (error) {
     return res.status(500).json({
       status: "error",
@@ -81,5 +87,36 @@ exports.login = async (req, res) => {
   }
 };
 exports.logout = async (req, res) => {};
-exports.refreshToken = async (req, res) => {};
-exports.getMe = async (req, res) => {};
+exports.refreshToken = async (req, res) => {
+  try {
+    const { decoded } = req;
+    const accessToken = await jwt.generateAccessToken(decoded);
+    return res.status(200).json({
+      status: "success",
+      message: "Access token refreshed successfully",
+      accessToken,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "Internal sever error",
+      error: error.message,
+    });
+  }
+};
+exports.getMe = async (req, res) => {
+  try {
+    const { user } = req;
+    res.status(200).json({
+      status: "success",
+      message: "User profile retrieved successfully",
+      data: user,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "Internal sever error",
+      error: error.message,
+    });
+  }
+};

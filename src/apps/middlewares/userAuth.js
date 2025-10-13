@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const config = require("config");
-const CustomerModel = require("../../apps/models/customer");
-exports.verifyAccessToken = (req, res, next) => {
+const UserModel = require("../../apps/models/user");
+exports.verifyUserAccessToken = (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
@@ -28,10 +28,10 @@ exports.verifyAccessToken = (req, res, next) => {
             error: err.message,
           });
         }
-        const customer = await CustomerModel.findById(decoded.id).select(
+        const user = await UserModel.findById(decoded.id).select(
           "-password"
         );
-        req.customer = customer;
+        req.user = user;
         next();
       }
     );
@@ -44,7 +44,7 @@ exports.verifyAccessToken = (req, res, next) => {
   }
 };
 
-exports.verifyRefreshToken = async (req, res, next) => {
+exports.verifyUserRefreshToken = async (req, res, next) => {
   try {
     const token = req.cookies?.refreshToken;
     if (!token) {

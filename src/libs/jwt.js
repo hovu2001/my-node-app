@@ -7,7 +7,7 @@ exports.generateAccessToken = (payload) =>
       email: payload.email,
     },
     config.get("app.jwtAccessKey"),
-    { expiresIn: "1d" }
+    { expiresIn: "30s" }
   );
 
 exports.generateRefreshToken = (payload) =>
