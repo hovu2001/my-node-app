@@ -1,6 +1,7 @@
 const ProductModel = require("../../models/product");
 const OrderModel = require("../../models/order");
-
+const sendMail = require("../../../emails/mail");
+const config = require("config");
 exports.order = async (req, res) => {
   try {
     let customerInfo = {};
@@ -21,6 +22,7 @@ exports.order = async (req, res) => {
     // Tính toán lại giá từ DB
     let totalPrice = 0;
     let orderItems = [];
+    let orderMail = [];
     const { items } = req.body;
     for (let item of items) {
       const product = await ProductModel.findById(item.prd_id);
@@ -37,6 +39,11 @@ exports.order = async (req, res) => {
         qty: item.qty,
         price: itemPrice,
       });
+      orderMail.push({
+        name: product.name,
+        qty: item.qty,
+        price: itemPrice,
+      });
     }
     // Tạo đơn hàng
     const order = await OrderModel.create({
@@ -44,6 +51,18 @@ exports.order = async (req, res) => {
       totalPrice,
       items: orderItems,
     });
+    //Send mail
+    await sendMail(
+      `${config.get("mail.mailTemplate")}/mail-order.ejs`,
+      {
+        ...customerInfo,
+        totalPrice,
+        items: orderMail,
+        subject: "Xác nhận đơn hàng từ Vietpro Shop",
+      }
+    );
+
+    //Response
     return res.status(201).json({
       status: "success",
       message: "Create order successfully",
@@ -58,3 +77,34 @@ exports.order = async (req, res) => {
   }
 };
 
+exports.findByCustomerId = async (req, res) => {
+  try {
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+exports.findOne = async (req, res) => {
+  try {
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+exports.cancel = async (req, res) => {
+  try {
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};

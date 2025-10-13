@@ -28,7 +28,7 @@ const {
   verifyAccessToken,
   verifyRefreshToken,
 } = require("../apps/middlewares/customerAuth");
-const { verifyCustomer } = require("../apps/middlewares/orderAuth");
+
 
 const {
   verifyUserAccessToken,
@@ -45,6 +45,8 @@ const {
   loginUserValidator,
 } = require("../apps/middlewares/authUserValidator");
 
+
+const { verifyCustomer } = require("../apps/middlewares/orderAuth");
 const {
   createOrderRules,
   createOrderValidator,
