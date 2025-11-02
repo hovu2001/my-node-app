@@ -2,6 +2,10 @@ const CustomerModel = require("../../models/customer");
 const bcrypt = require("bcrypt");
 const { validationResult } = require("express-validator");
 const jwt = require("../../../libs/jwt");
+const {
+  deleteCusTomerToken,
+  storeCustomerToken,
+} = require("../../../libs/token.service");
 
 exports.register = async (req, res) => {
   try {
@@ -52,7 +56,7 @@ exports.register = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({
-      status: "error", 
+      status: "error",
       message: "Internal server error",
       error: error.message,
     });
@@ -64,8 +68,8 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     const isEmail = await CustomerModel.findOne({ email });
-   
-     if (!isEmail)
+
+    if (!isEmail)
       return res.status(400).json({
         status: "error",
         message: "Invalid email",
@@ -77,29 +81,32 @@ exports.login = async (req, res) => {
         status: "error",
         message: "Invalid password",
       });
-    
-      if(isEmail && isPassword){
-          // Generate Token
-          const accessToken = await jwt.generateAccessToken(isEmail);
-          const refreshToken = await jwt.generateRefreshToken(isEmail);
-          const {password, ...others} = isEmail.toObject();
-          // Response Token & Customer
-          res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            secure: false,
-            sameSite: "Strict",
-            maxAge: 24 * 60 * 60 * 1000,
-          });
 
-          return res.status(200).json({
-            status: "success",
-            message: "Logged in successfully",
-            customer: others,
-            accessToken,
-          })
-      }
+    if (isEmail && isPassword) {
+      // Generate Token
+      const accessToken = await jwt.generateAccessToken(isEmail);
+      const refreshToken = await jwt.generateRefreshToken(isEmail);
+      const { password, ...others } = isEmail.toObject();
 
-      
+      // Insert Token to Database
+
+      storeCustomerToken(others._id, accessToken, refreshToken);
+
+      // Response Token & Customer
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "Strict",
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+
+      return res.status(200).json({
+        status: "success",
+        message: "Logged in successfully",
+        customer: others,
+        accessToken,
+      });
+    }
   } catch (error) {
     return res.status(500).json({
       status: "error",
@@ -108,17 +115,33 @@ exports.login = async (req, res) => {
     });
   }
 };
-exports.logout = async (req, res) => {};
+exports.logout = async (req, res) => {
+  try {
+    const { customer } = req;
+    // Di chuyen Token(Access Token & Refresh Token) vao redis
+    // Xoa Token trong database
+    deleteCusTomerToken(customer.id);
+    return res.status(200).json({
+      status: "success",
+      message: "Logout successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "Internal sever error",
+      error: error.message,
+    });
+  }
+};
 exports.refreshToken = async (req, res) => {
   try {
-    const {decoded} = req;
+    const { decoded } = req;
     const accessToken = await jwt.generateAccessToken(decoded);
     return res.status(200).json({
       status: "success",
       message: "Access token refreshed successfully",
       accessToken,
-    })
-    
+    });
   } catch (error) {
     return res.status(500).json({
       status: "error",
@@ -129,14 +152,14 @@ exports.refreshToken = async (req, res) => {
 };
 exports.getMe = async (req, res) => {
   try {
-    const {customer} = req;
+    const { customer } = req;
     res.status(200).json({
       status: "success",
       message: "User profile retrieved successfully",
       data: customer,
-    })
+    });
   } catch (error) {
-     return res.status(500).json({
+    return res.status(500).json({
       status: "error",
       message: "Internal sever error",
       error: error.message,
