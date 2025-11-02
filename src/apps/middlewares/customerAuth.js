@@ -1,8 +1,10 @@
 const jwt = require("jsonwebtoken");
 const config = require("config");
+const redisClient = require("../../common/init.redis");
 const CustomerModel = require("../../apps/models/customer");
-exports.verifyAccessToken = (req, res, next) => {
+exports.verifyAccessToken = async (req, res, next) => {
   try {
+    // console.log('HEADER AUTHORIZATION:', req.headers.authorization);  <-- THÊM DÒNG NÀY
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
       return res.status(401).json({
@@ -10,31 +12,36 @@ exports.verifyAccessToken = (req, res, next) => {
         message: "Access token is required",
       });
     }
-    const decoded = jwt.verify(
-      token,
-      config.get("app.jwtAccessKey"),
-      async (err, decoded) => {
-        if (err) {
-          if (err.name === "TokenExpiredError") {
+    // Check Token Redis
+    const isTokenBlacklist = await redisClient.get(`tb_${token}`);
+    if (isTokenBlacklist) {
+      return res.status(401).json({
+        status: "error",
+        message: "Token has been revoked (blacklisted)",
+      });
+    }
+    //  const decoded =
+    jwt.verify(token, config.get("app.jwtAccessKey"), async (err, decoded) => {
+      if (err) {
+        if (err.name === "TokenExpiredError") {
           return res.status(401).json({
             status: "error",
             message: "Access token expired",
             error: err.message,
           });
         }
-          return res.status(401).json({
-            status: "error",
-            message: "Invalid access token",
-            error: err.message,
-          });
-        }
-        const customer = await CustomerModel.findById(decoded.id).select(
-          "-password"
-        );
-        req.customer = customer;
-        next();
+        return res.status(401).json({
+          status: "error",
+          message: "Invalid access token",
+          error: err.message,
+        });
       }
-    );
+      const customer = await CustomerModel.findById(decoded.id).select(
+        "-password"
+      );
+      req.customer = customer;
+      next();
+    });
   } catch (error) {
     return res.status(500).json({
       status: "error",

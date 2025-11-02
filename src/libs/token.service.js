@@ -1,5 +1,5 @@
 const TokenModel = require("../apps/models/token");
-
+const {addTokenBlacklist } = require("./redis.token")
 exports.storeCustomerToken = async (
   customerId,
   accessToken,
@@ -23,7 +23,7 @@ exports.deleteCusTomerToken = async (customerId) => {
     throw error;
   }
   // Move Token to Redis
-
+  await addTokenBlacklist(customerId)
 
   // Delete Token from Database
 

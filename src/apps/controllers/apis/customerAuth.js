@@ -1,4 +1,5 @@
 const CustomerModel = require("../../models/customer");
+const {addTokenBlacklist} = require("../../../libs/redis.token");
 const bcrypt = require("bcrypt");
 const { validationResult } = require("express-validator");
 const jwt = require("../../../libs/jwt");
@@ -119,6 +120,7 @@ exports.logout = async (req, res) => {
   try {
     const { customer } = req;
     // Di chuyen Token(Access Token & Refresh Token) vao redis
+    await addTokenBlacklist(customer.id);
     // Xoa Token trong database
     deleteCusTomerToken(customer.id);
     return res.status(200).json({
