@@ -3,6 +3,7 @@ const router = express.Router();
 const upload = require("../libs/upload");
 
 //Import Controller
+const BannerController = require("../apps/controllers/apis/banner");
 const CategoryController = require("../apps/controllers/apis/category");
 const ProductController = require("../apps/controllers/apis/product");
 const CommentController = require("../apps/controllers/apis/comment");
@@ -75,6 +76,15 @@ router.put("/products/:id", ProductController.update);
 router.delete("/products/:id", ProductController.remove);
 router.post("/products", upload.single("image"), ProductController.create);
 
+//Banner
+router.get("/banners", BannerController.getAll);          
+router.get("/banners/:id", BannerController.getById);    
+router.post("/banners", upload.single("image"), BannerController.create); 
+router.put("/banners/:id", upload.single("image"), BannerController.update); 
+router.delete("/banners/:id", BannerController.remove);  
+
+
+
 //Comment
 router.get("/products/:id/comments", CommentController.findByProductId);
 router.post("/products/:id/comments", CommentController.create);
@@ -142,7 +152,8 @@ router.post(
 
 //Order Admin API
 router.get("/admin/orders", AdminOrderController.fillAll);
-router.patch("/admin/orders/:id", AdminOrderController.updateStatus);
+router.patch("/admin/orders/:id/status", AdminOrderController.updateStatus);
+router.patch("/admin/orders/:id",AdminOrderController.updateOrder);
 router.delete("/admin/orders/:id", AdminOrderController.remove);
 
 router.get(

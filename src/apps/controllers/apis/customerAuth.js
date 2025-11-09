@@ -1,12 +1,13 @@
 const CustomerModel = require("../../models/customer");
-const {addTokenBlacklist} = require("../../../libs/redis.token");
+const {addTokenBlacklist}  = require("../../../libs/redis.token")
+const jwt = require("../../../libs/jwt");
 const bcrypt = require("bcrypt");
 const { validationResult } = require("express-validator");
-const jwt = require("../../../libs/jwt");
 const {
-  deleteCusTomerToken,
+  deleteCustomerToken,
   storeCustomerToken,
 } = require("../../../libs/token.service");
+
 
 exports.register = async (req, res) => {
   try {
@@ -67,15 +68,15 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
+    // check email
     const isEmail = await CustomerModel.findOne({ email });
-
     if (!isEmail)
       return res.status(400).json({
         status: "error",
         message: "Invalid email",
       });
 
+    // check password
     const isPassword = await bcrypt.compare(password, isEmail.password);
     if (!isPassword)
       return res.status(400).json({
@@ -90,9 +91,7 @@ exports.login = async (req, res) => {
       const { password, ...others } = isEmail.toObject();
 
       // Insert Token to Database
-
       storeCustomerToken(others._id, accessToken, refreshToken);
-
       // Response Token & Customer
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
@@ -119,22 +118,23 @@ exports.login = async (req, res) => {
 exports.logout = async (req, res) => {
   try {
     const { customer } = req;
-    // Di chuyen Token(Access Token & Refresh Token) vao redis
-    await addTokenBlacklist(customer.id);
-    // Xoa Token trong database
-    deleteCusTomerToken(customer.id);
-    return res.status(200).json({
+    // Move Token (Access Token & Refresh Token) to Redis
+    await addTokenBlacklist(customer.id)
+    // Delete Token from Database
+     deleteCustomerToken(customer.id); 
+     return res.status(200).json({
       status: "success",
       message: "Logout successfully",
     });
   } catch (error) {
     return res.status(500).json({
       status: "error",
-      message: "Internal sever error",
+      message: "Internal server error",
       error: error.message,
     });
   }
 };
+
 exports.refreshToken = async (req, res) => {
   try {
     const { decoded } = req;

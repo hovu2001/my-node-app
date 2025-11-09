@@ -12,15 +12,12 @@ exports.verifyAccessToken = async (req, res, next) => {
         message: "Access token is required",
       });
     }
-    // Check Token Redis
+    // Check Token in blacklist
     const isTokenBlacklist = await redisClient.get(`tb_${token}`);
-    if (isTokenBlacklist) {
-      return res.status(401).json({
-        status: "error",
-        message: "Token has been revoked (blacklisted)",
-      });
-    }
-    //  const decoded =
+    if(isTokenBlacklist) return res.status(401).json({
+      status: "error",
+      message: "Access token has benn revoked",
+    });
     jwt.verify(token, config.get("app.jwtAccessKey"), async (err, decoded) => {
       if (err) {
         if (err.name === "TokenExpiredError") {
