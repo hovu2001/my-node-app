@@ -1,6 +1,15 @@
 const UserModel = require("../../models/user");
 const bcrypt = require("bcrypt");
 const jwt = require("../../../libs/jwt");
+const sendMail = require("../../../emails/mail");
+const config = require("config");
+const path = require("path");
+const {
+  deleteUserToken,
+  storeUserToken,
+} = require("../../../libs/token.user.service");
+const {addTokenBlacklist}   = require("../../../libs/redis.user.token");
+
 exports.register = async (req, res) => {
   try {
     // Validate form
@@ -23,6 +32,21 @@ exports.register = async (req, res) => {
       password: hashedPassword,
     });
 
+    // Send mail
+    const templatePath = path.join(
+      __dirname,
+      "../../../emails/templates/mail-user-register.ejs"
+    );
+
+    const mailPayload = {
+      email: newUser.email, // Bắt buộc
+      subject: "Xác nhận đăng ký thành công - Vietpro Shop",
+      link: "https://vietproshop.com", // Link trang chủ hoặc link xác thực
+    };
+
+    await sendMail(templatePath, mailPayload);
+
+
     return res.status(201).json({
       status: "success",
       message: "Create User successfully!",
@@ -39,7 +63,6 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const isEmail = await UserModel.findOne({ email });
     if (!isEmail) {
       return res.status(400).json({
@@ -47,7 +70,6 @@ exports.login = async (req, res) => {
         message: "Invalid email",
       });
     }
-
     const isPassword = await bcrypt.compare(password, isEmail.password);
     // ||  await UserModel.findOne({ password });
 
@@ -59,10 +81,15 @@ exports.login = async (req, res) => {
     }
 
     if (isEmail && isPassword) {
+
       // Generate Token
       const accessToken = await jwt.generateAccessToken(isEmail);
       const refreshToken = await jwt.generateRefreshToken(isEmail);
       const { password, ...user } = isEmail.toObject();
+      
+       // Insert Token to database
+       await storeUserToken(user._id, accessToken, refreshToken);
+      
       // Response API
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
@@ -86,7 +113,27 @@ exports.login = async (req, res) => {
     });
   }
 };
-exports.logout = async (req, res) => {};
+exports.logout = async (req, res) => {
+  try {
+    const { user } = req;
+    // Move Token (Access Token & Refresh Token) to Redis
+    await addTokenBlacklist(user.id);
+
+  // Delete Token from Database
+  await  deleteUserToken(user.id);
+  return res.status(200).json({
+      status: "success",
+      message: "Logout successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+
+};
 exports.refreshToken = async (req, res) => {
   try {
     const { decoded } = req;

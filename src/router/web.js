@@ -133,7 +133,7 @@ router.post(
   loginUserValidator,
   UserController.login
 );
-router.post("/auth/users/logout", UserController.logout);
+router.post("/auth/users/logout", verifyUserAccessToken, UserController.logout);
 router.post(
   "/auth/users/refresh",
   verifyUserRefreshToken,

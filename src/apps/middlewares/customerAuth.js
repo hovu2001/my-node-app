@@ -16,7 +16,7 @@ exports.verifyAccessToken = async (req, res, next) => {
     const isTokenBlacklist = await redisClient.get(`tb_${token}`);
     if(isTokenBlacklist) return res.status(401).json({
       status: "error",
-      message: "Access token has benn revoked",
+      message: "Access token has been revoked",
     });
     jwt.verify(token, config.get("app.jwtAccessKey"), async (err, decoded) => {
       if (err) {

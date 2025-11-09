@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Đăng ký thành công</title>
+</head>
+<body>
+  <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
+    <h2>Chào mừng <%= payload.email %>!</h2>
+    <p>Bạn đã đăng ký tài khoản thành công trên Vietpro Shop.</p>
+    <p>Hãy bắt đầu trải nghiệm ngay bây giờ.</p>
+    <a href="<%= payload.link %>" style="display:inline-block;margin-top:20px;padding:10px 20px;background-color:#4CAF50;color:white;text-decoration:none;border-radius:5px;">Truy cập trang chủ</a>
+  </div>
+</body>
+</html>

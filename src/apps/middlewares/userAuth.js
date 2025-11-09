@@ -1,8 +1,10 @@
 const jwt = require("jsonwebtoken");
 const config = require("config");
+const redisClient = require("../../common/init.redis");
 const UserModel = require("../../apps/models/user");
-exports.verifyUserAccessToken = (req, res, next) => {
+exports.verifyUserAccessToken = async (req, res, next) => {
   try {
+    
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
       return res.status(401).json({
@@ -10,6 +12,15 @@ exports.verifyUserAccessToken = (req, res, next) => {
         message: "Access token is required",
       });
     }
+
+        // Check Token in blacklist
+    const isTokenBlacklisted = await redisClient.get(`tbu_${token}`);
+    if (isTokenBlacklisted)
+      return res.status(401).json({
+        status: "error",
+        message: "Access Token has been revoked",
+      });
+
     const decoded = jwt.verify(
       token,
       config.get("app.jwtAccessKey"),
