@@ -3,6 +3,7 @@ const router = express.Router();
 const upload = require("../libs/upload");
 
 //Import Controller
+const AuthController = require("../apps/controllers/apis/auth2");
 const BannerController = require("../apps/controllers/apis/banner");
 const CategoryController = require("../apps/controllers/apis/category");
 const ProductController = require("../apps/controllers/apis/product");
@@ -51,6 +52,9 @@ const {
   createOrderRules,
   createOrderValidator,
 } = require("../apps/middlewares/orderValidator");
+
+//Auth2
+router.post("/google", AuthController.googleLogin);
 
 // Categories
 router.get("/categories", CategoryController.findAll);
