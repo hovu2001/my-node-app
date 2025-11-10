@@ -5,6 +5,7 @@ const upload = require("../libs/upload");
 //Import Controller
 const AuthController = require("../apps/controllers/apis/auth2");
 const BannerController = require("../apps/controllers/apis/banner");
+const SliderController = require("../apps/controllers/apis/slider");
 const CategoryController = require("../apps/controllers/apis/category");
 const ProductController = require("../apps/controllers/apis/product");
 const CommentController = require("../apps/controllers/apis/comment");
@@ -91,7 +92,15 @@ router.post("/banners", upload.single("image"), BannerController.create);
 router.put("/banners/:id", upload.single("image"), BannerController.update); 
 router.delete("/banners/:id", BannerController.remove);  
 
-
+//Slider
+router.get("/sliders", SliderController.getAll);
+router.get("/sliders/:id", SliderController.getById);
+router.post("/sliders", upload.single("image"), SliderController.create);
+router.put("/sliders/:id", upload.single("image"), SliderController.update);
+router.delete("/sliders/:id", SliderController.remove);
+router.patch("/sliders/toggle-publish/:id", SliderController.togglePublish);
+router.patch("/sliders/reorder", SliderController.reorder);
+router.patch("/sliders/move", SliderController.moveSlider);
 
 //Comment
 router.get("/products/:id/comments", CommentController.findByProductId);
