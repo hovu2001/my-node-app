@@ -55,6 +55,10 @@ const {
 
 //Auth2
 router.post("/google", AuthController.googleLogin);
+router.post("/forgot-password",UserController.forgotPassword);
+router.post("/reset-password", UserController.resetPassword);
+
+
 
 // Categories
 router.get("/categories", CategoryController.findAll);

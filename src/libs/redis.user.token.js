@@ -29,3 +29,10 @@ exports.addTokenBlacklist = async (userId) => {
     });
   }
 };
+
+// Lưu key với expire time (giây)
+const setRedis = async (key, value, expireInSec) => await clientRedis.set(key, value, { EX: expireInSec });
+const getRedis = async (key) => await clientRedis.get(key);
+const delRedis = async (key) => await clientRedis.del(key);
+
+module.exports = { setRedis, getRedis, delRedis };

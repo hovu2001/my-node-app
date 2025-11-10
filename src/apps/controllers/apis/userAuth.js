@@ -1,6 +1,7 @@
 const UserModel = require("../../models/user");
 const bcrypt = require("bcrypt");
 const jwt = require("../../../libs/jwt");
+const { generateResetPasswordToken, verifyResetPasswordToken } = require("../../../libs/jwt-reset");
 const sendMail = require("../../../emails/mail");
 const config = require("config");
 const path = require("path");
@@ -8,7 +9,7 @@ const {
   deleteUserToken,
   storeUserToken,
 } = require("../../../libs/token.user.service");
-const {addTokenBlacklist}   = require("../../../libs/redis.user.token");
+const {addTokenBlacklist, setRedis, getRedis, delRedis}   = require("../../../libs/redis.user.token");
 
 exports.register = async (req, res) => {
   try {
@@ -165,5 +166,63 @@ exports.getMe = async (req, res) => {
       message: "Internal sever error",
       error: error.message,
     });
+  }
+};
+
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await UserModel.findOne({ email });
+    if (!user) return res.status(400).json({ status: "error", message: "Email không tồn tại" });
+
+    // Tạo token reset password
+    const resetToken = generateResetPasswordToken(user);
+
+    // Lưu token vào Redis, 15 phút
+    await setRedis(`reset_password_${user._id}`, resetToken, 900);
+
+    // Gửi mail
+    const templatePath = path.join(__dirname, "../../../emails/templates/mail-reset-password.ejs");
+    const mailPayload = {
+      email: user.email,
+      subject: "Đặt lại mật khẩu - Vietpro Shop",
+      link: `http://localhost:3000/auth/reset-password?token=${resetToken}`, // link backend
+    };
+    await sendMail(templatePath, mailPayload);
+
+    return res.status(200).json({ status: "success", message: "Gửi email lấy lại mật khẩu thành công!" });
+  } catch (error) {
+    return res.status(500).json({ status: "error", message: "Internal server error", error: error.message });
+  }
+};
+
+// Reset mật khẩu
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token) return res.status(400).json({ status: "error", message: "Token không hợp lệ" });
+
+    // Xác thực token JWT
+    let decoded;
+    try { decoded = verifyResetPasswordToken(token); }
+    catch { return res.status(400).json({ status: "error", message: "Token hết hạn hoặc không hợp lệ" }); }
+
+    // Kiểm tra token trong Redis
+    const redisToken = await getRedis(`reset_password_${decoded.id}`);
+    if (!redisToken || redisToken !== token) {
+      return res.status(400).json({ status: "error", message: "Token đã bị thu hồi hoặc hết hạn" });
+    }
+
+    // Hash mật khẩu mới và update DB
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await UserModel.findByIdAndUpdate(decoded.id, { password: hashedPassword });
+
+    // Xóa token trong Redis
+    await delRedis(`reset_password_${decoded.id}`);
+
+    return res.status(200).json({ status: "success", message: "Đổi mật khẩu thành công!" });
+  } catch (error) {
+    return res.status(500).json({ status: "error", message: "Internal server error", error: error.message });
   }
 };
